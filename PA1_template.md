@@ -8,22 +8,43 @@ output:
 
 ## Loading and preprocessing the data
 
-```{r}
+
+```r
 filename <- unzip("activity.zip")
 activity <- read.csv("activity.csv", stringsAsFactors = FALSE)
 str(activity)
 ```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : chr  "2012-10-01" "2012-10-01" "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
 column containing the dates is not properly formatted to a Date class so it needs to be adjusted 
 
-```{r}
+
+```r
 activity$date <- as.Date(activity$date)
 str(activity)
 ```
 
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Date, format: "2012-10-01" "2012-10-01" ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
 count missing values
 
-```{r}
+
+```r
 sum(is.na(activity$steps))
+```
+
+```
+## [1] 2304
 ```
 
 ## What is mean total number of steps taken per day?
@@ -32,22 +53,27 @@ For the first two questions we will need a file that does not contain missing va
 
 The dataset called "activity_rm" is created for this reason.
 
-```{r}
+
+```r
 activity_rm<-activity[which(!is.na(activity$steps)),]
 ```
 
 The number of steps taken is measured in timeslots, 5-minute intervals, so in order to compute the total number of steps taken for each day we will aggregate the data by day.
 
-```{r}
+
+```r
 perday<-tapply(activity_rm$steps, activity_rm$date, sum)
 ```
 
 So, now the per day dataset contains the total number of steps taken for each day of October and November (total 53 days)
 histogram of the total number of steps taken each day.
 
-```{r}
+
+```r
 hist(perday,10, main = "Total number of steps taken per day", xlab = "")
 ```
+
+![plot of chunk unnamed-chunk-6](figure/unnamed-chunk-6-1.png) 
 
 
 The mean total number of steps during a whole day is 1.0766 × 104, while the median of the total steps is 10765.
@@ -58,17 +84,26 @@ In order to explore our data throughout the day, we will need to aggregate the d
 
 x-axis point labels are the names of the intervals in the dataset. The coding of the interval names is such, so that e.g. 500 should be conidered as 5:00 and 1000 as 10:00, ans so on. So, one can consider th x-axis as a fuull 24-hour-day starting from midnight and ending at the next midnight hour.
 
-```{r}
+
+```r
 dailyact<-tapply(activity_rm$steps, activity_rm$interval, mean)
 plot(y = dailyact, x = names(dailyact), type = "l", xlab = "5-Minute-Interval", 
     main = "Daily Activity Pattern", ylab = "Average number of steps")
 ```
 
+![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7-1.png) 
+
 
 Interval with the maximum average number of steps throughout the days is 835 with 206.1698 steps.
 
-```{r}
+
+```r
 dailyact[dailyact==max(dailyact)]
+```
+
+```
+##      835 
+## 206.1698
 ```
 
 
@@ -77,12 +112,22 @@ there are a number of days/intervals where there are missing values (coded as NA
 
 check that the other two variables do not have any missing data.
 
-```{r}
+
+```r
 sum(is.na(activity$steps))
 ```
 
-```{r}
+```
+## [1] 2304
+```
+
+
+```r
 sum(is.na(activity))
+```
+
+```
+## [1] 2304
 ```
 
 
@@ -94,7 +139,8 @@ In order to exclude the bias we have to come up with a method for filling in all
 
 We will go with the option of using the mean of the 5-minute interval, and thus we will now create a new dataset that is equal to the original dataset but with the missing data filled in.
 
-```{r}
+
+```r
 act_new <- activity
 act_new[which(is.na(act_new$steps)),1]<-
         dailyact[as.character(act_new[which(is.na(act_new$steps)),3])]
@@ -102,14 +148,20 @@ act_new[which(is.na(act_new$steps)),1]<-
 
 No missing values are now in the new dataset:
 
-```{r}
+
+```r
 sum(is.na(act_new))
+```
+
+```
+## [1] 0
 ```
 
 
 Now let's make the same histogram, that we made in the first part of the analysis, in order to visually see if there is a big effect.
 
-```{r}
+
+```r
 perday_new<-tapply(act_new$steps, act_new$date, sum)
 par(mfrow=c(1,2))
 hist(perday,10, main = "Total number of steps taken per day", xlab = "Steps"
@@ -121,28 +173,50 @@ hist(perday_new,10, main = "Total number of steps taken per day
 abline(v = median(perday_new), col = 4, lwd = 4)
 ```
 
+![plot of chunk unnamed-chunk-13](figure/unnamed-chunk-13-1.png) 
+
 
 
 We now calculate the median and the mean of the filled in dataset
 
-```{r}
+
+```r
 mean(perday_new)
 ```
 
+```
+## [1] 10766.19
+```
 
-```{r}
+
+
+```r
 median(perday_new)
+```
+
+```
+## [1] 10766.19
 ```
 
 
 The impact of inputting missing data is minimal, as only the median seems to be changing but by just over one step.
 
-```{r}
+
+```r
 mean(perday_new)-mean(perday)
 ```
 
-```{r}
+```
+## [1] 0
+```
+
+
+```r
 median(perday_new)-median(perday)
+```
+
+```
+## [1] 1.188679
 ```
 
 
@@ -150,7 +224,8 @@ median(perday_new)-median(perday)
 ## Are there differences in activity patterns between weekdays and weekends?
 In this part of the assigment, we will create factor variable in the dataset with two levels - "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
 
-```{r}
+
+```r
 act_new$wd<-weekdays(act_new$date)
 act_new$fwd<- as.factor(c("weekend", "weekday"))
 act_new[act_new$wd == "Sunday" | act_new$wd == "Saturday" ,5]<- factor("weekend")
@@ -161,7 +236,8 @@ Now we will create two aggregated arrays for the total number of steps taken per
 
 Note that the plot has been created in the base system.
 
-```{r}
+
+```r
 act_new_we <- subset(act_new, fwd == "weekend") 
 act_new_wd <- subset(act_new, fwd == "weekday") 
 dailyact_we<-tapply(act_new_we$steps, act_new_we$interval, mean)
@@ -174,6 +250,8 @@ plot(y = dailyact_we, x = names(dailyact_we), type = "l", xlab = "5-Minute Inter
      main = "Daily Activity Pattern on Weekends", ylab = "Average number of steps", 
      ylim =c(0, 250))
 ```
+
+![plot of chunk unnamed-chunk-19](figure/unnamed-chunk-19-1.png) 
 
 
 
